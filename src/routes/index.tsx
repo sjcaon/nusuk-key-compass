@@ -184,7 +184,7 @@ function Index() {
               const used = copied.includes(k.id);
               const leaving = fading.includes(k.id);
               return (
-                <div key={k.id} className={`glass card-interactive flex flex-col gap-4 rounded-lg p-4 ${leaving ? "card-leave" : "card-enter"} ${used && !leaving ? "opacity-50" : ""}`}>
+                <div key={k.id} className={`glass card-interactive flex flex-col gap-4 rounded-lg p-4 ${leaving ? "card-leave" : used ? "opacity-50" : "card-enter"}`}>
                   <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                     <span className="text-sm font-semibold text-foreground/70">Referral Code</span>
                     <span className="text-xs text-foreground/50">{timeAgo(k.created_at)}</span>
