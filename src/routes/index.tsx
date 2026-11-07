@@ -157,10 +157,10 @@ function Index() {
                   )}
                   <div className="code-box">{k.key_value}</div>
                   <div className="grid grid-cols-2 gap-2">
-                    <button onClick={() => copy(k)} className={used ? "btn-muted" : "btn-brand"}>
+                    <button onClick={() => copy(k)} className={`${used ? "btn-muted" : "btn-brand"} whitespace-nowrap px-2`}>
                       {used ? <><Check className="h-4 w-4" /> Already Copied</> : <><Copy className="h-4 w-4" /> Copy Code</>}
                     </button>
-                    <a href={NUSUK_URL} target="_blank" rel="noopener noreferrer" className="btn-muted">
+                    <a href={NUSUK_URL} target="_blank" rel="noopener noreferrer" className="btn-muted whitespace-nowrap px-2">
                       <ExternalLink className="h-4 w-4" /> Open Nosuk App
                     </a>
                   </div>
