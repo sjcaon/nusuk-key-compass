@@ -120,8 +120,6 @@ function Index() {
             <img src={logo.url} alt="" className="brand-mark shrink-0" />
             <span className="text-sm font-bold leading-tight sm:text-xl">Nosuk key World</span>
           </div>
-            <span className="truncate text-lg font-bold tracking-tight sm:text-xl">Nosuk key World</span>
-          </div>
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <ThemeToggle />
             <Button variant="ghost" onClick={() => setShowShare(true)} className="btn-glow" aria-label="Share App">
