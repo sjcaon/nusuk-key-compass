@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "bun install --frozen-lockfile",
+  "buildCommand": "NITRO_PRESET=vercel bun run build",
+  "outputDirectory": ".vercel/output",
+  "rewrites": [
+    { "source": "/__l5e/assets-v1/:path*", "destination": "https://nusuk-key-compass.lovable.app/__l5e/assets-v1/:path*" }
+  ]
+}

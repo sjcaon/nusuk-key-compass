@@ -1,10 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Copy, Check, KeyRound, ShieldCheck, Plus, Users, Eye, ExternalLink, Share2, X, Globe, Facebook, MessageCircle, Twitter, Send, Link2 } from "lucide-react";
+import { Copy, Check, KeyRound, ShieldCheck, Plus, Users, Eye, ExternalLink, Share2, X, Globe, Facebook, MessageCircle, Twitter, Send, Link2, HeartHandshake, ArrowRight } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { Footer } from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { BenefitsModal } from "@/components/BenefitsModal";
+import logo from "@/assets/nosuk-brand-mark.asset.json";
+import wordmark from "@/assets/nosuk-brand-name.asset.json";
+import { COPIED_STORAGE as LS, HIDE_STORAGE as HIDE, SHARE_URL, readCopied, readHideUsed, sortKeys, visibleKeys } from "@/lib/key-board";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,8 +28,6 @@ export const Route = createFileRoute("/")({
 });
 
 type Key = { id: string; key_value: string; is_admin_drop: boolean; created_at: string };
-const LS = "nusuk_copied_keys";
-const HIDE = "nusuk_hide_used";
 const NUSUK_URL = "https://www.nusuk.sa/";
 
 function timeAgo(d: string) {
@@ -41,26 +46,28 @@ function Index() {
   const [value, setValue] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showShare, setShowShare] = useState(false);
-  const [hideUsed, setHideUsed] = useState(false);
+  const [hideUsed, setHideUsed] = useState(true);
+  const [showBenefits, setShowBenefits] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [fading, setFading] = useState<string[]>([]);
-  const toggleHide = (v: boolean) => { setHideUsed(v); localStorage.setItem(HIDE, v ? "1" : "0"); };
+  const toggleHide = (v: boolean) => { setHideUsed(v); try { localStorage.setItem(HIDE, v ? "1" : "0"); } catch { toast.error("Your preference could not be saved."); } };
   const [sort, setSort] = useState<"newest" | "active">("newest");
 
   const load = async () => {
     const { data, error } = await supabase
       .from("nusuk_keys")
       .select("*")
-      .order("is_admin_drop", { ascending: false })
       .order("created_at", { ascending: false });
+    setLoadError(Boolean(error));
     if (error) toast.error("Could not load keys");
-    setKeys(data ?? []);
+    else setKeys(data ?? []);
     setLoading(false);
   };
 
   useEffect(() => {
     try {
-      setCopied(JSON.parse(localStorage.getItem(LS) || "[]"));
-      setHideUsed(localStorage.getItem(HIDE) === "1");
+      setCopied(readCopied(localStorage.getItem(LS)));
+      setHideUsed(readHideUsed(localStorage.getItem(HIDE)));
     } catch {}
     load();
   }, []);
@@ -94,61 +101,57 @@ function Index() {
       setTimeout(() => setFading((f) => f.filter((x) => x !== k.id)), 450);
     }
     setCopied(next);
-    localStorage.setItem(LS, JSON.stringify(next));
+    try { localStorage.setItem(LS, JSON.stringify(next)); } catch { toast.error("Copied, but tracking could not be saved on this device."); }
   };
 
-  const sorted = [...keys].sort((a, b) => {
-    if (sort === "active") {
-      const ua = copied.includes(a.id) ? 1 : 0, ub = copied.includes(b.id) ? 1 : 0;
-      if (ua !== ub) return ua - ub;
-    }
-    if (a.is_admin_drop !== b.is_admin_drop) return a.is_admin_drop ? -1 : 1;
-    return +new Date(b.created_at) - +new Date(a.created_at);
-  });
-  const visible = hideUsed ? sorted.filter((k) => !copied.includes(k.id) || fading.includes(k.id)) : sorted;
+  const sorted = sortKeys(keys, copied, sort === "active");
+  const visible = visibleKeys(sorted, copied, hideUsed, fading);
   const stats = [
-    { label: "Total Keys Shared", value: keys.length.toLocaleString(), icon: KeyRound },
-    { label: "Active Users", value: (128 + keys.length * 3).toLocaleString(), icon: Users },
-    { label: "Total Views", value: (2450 + keys.length * 17).toLocaleString(), icon: Eye },
+    { label: "Total Shared", value: keys.length.toLocaleString(), icon: KeyRound },
+    { label: "Active Users", value: "—", icon: Users },
+    { label: "Total Views", value: "—", icon: Eye },
   ];
 
   return (
     <div className="flex min-h-screen flex-col bg-app">
       <header className="sticky top-0 z-40 px-4 pt-4 sm:px-6">
-        <div className="glass mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl px-4 py-3">
+        <div className="glass mx-auto grid max-w-screen-2xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl px-4 py-3">
           <div className="flex min-w-0 items-center gap-2">
-            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-brand text-primary-foreground shadow-glow">
-              <KeyRound className="h-4 w-4" />
-            </div>
-            <span className="truncate text-lg font-bold tracking-tight sm:text-xl">Nosuk key World</span>
+            <img src={logo.url} alt="" className="brand-mark shrink-0" />
+            <span className="text-sm font-bold leading-tight sm:text-xl">Nosuk key World</span>
           </div>
-          <div className="flex shrink-0 gap-2">
-            <button onClick={() => setShowShare(true)} className="btn-glow" aria-label="Share App">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <ThemeToggle />
+            <Button variant="ghost" onClick={() => setShowShare(true)} className="btn-glow" aria-label="Share App">
               <Share2 className="h-4 w-4" /><span className="hidden sm:inline">Share App</span>
-            </button>
-            <button onClick={() => setShowModal(true)} className="btn-brand" aria-label="Submit Key">
-              <Plus className="h-4 w-4" /><span className="hidden sm:inline">Submit Key</span>
-            </button>
+            </Button>
+            <Button variant="ghost" onClick={() => setShowModal(true)} className="btn-brand" aria-label="Add Key">
+              <Plus className="h-4 w-4" /><span className="hidden sm:inline">Add Key</span>
+            </Button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6">
-        <section className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+      <main className="mx-auto w-full max-w-screen-2xl flex-1 px-4 sm:px-6">
+        <section className="mt-8 flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
+          <div className="min-w-0"><img src={wordmark.url} alt="Nosuk key World — Global Umrah Competition Hub" className="brand-wordmark" /></div>
+          <Button variant="outline" className="btn-glow" onClick={() => setShowBenefits(true)}><HeartHandshake /> Benefits</Button>
+        </section>
+        <section className="mt-6 grid grid-cols-3 gap-2 sm:gap-4">
           {stats.map((st) => (
-            <div key={st.label} className="glass-pill flex items-center gap-3 px-5 py-3">
+            <div key={st.label} className="glass-pill flex min-w-0 flex-col items-center gap-2 px-2 py-3 sm:flex-row sm:gap-3 sm:px-5">
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-brand text-primary-foreground shadow-glow">
                 <st.icon className="h-5 w-5" />
               </div>
               <div className="min-w-0">
-                <div className="text-2xl font-extrabold leading-tight text-gradient">{st.value}</div>
-                <div className="truncate text-xs text-foreground/60 sm:text-sm">{st.label}</div>
+                <div className="text-xl font-extrabold leading-tight text-gradient sm:text-2xl">{st.value}</div>
+                <div className="text-center text-[11px] text-muted-foreground sm:text-left sm:text-sm">{st.label}</div>
               </div>
             </div>
           ))}
         </section>
 
-        <div className="glass mt-6 flex flex-col gap-3 rounded-2xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-8 flex flex-col gap-3 border-b border-input pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2 font-bold">
             <span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent" /></span>
             Live Board
@@ -160,7 +163,7 @@ function Index() {
             </label>
             <div className="flex gap-1 rounded-xl bg-muted p-1">
               {([["newest", "Newest First"], ["active", "Active Keys"]] as const).map(([v, l]) => (
-                <button key={v} onClick={() => setSort(v)} className={sort === v ? "tab-active" : "tab"}>{l}</button>
+                <Button variant="ghost" key={v} onClick={() => setSort(v)} className={sort === v ? "tab-active" : "tab"}>{l}</Button>
               ))}
             </div>
           </div>
@@ -169,18 +172,20 @@ function Index() {
         <div className="mt-5">
         {loading ? (
           <p className="text-center text-foreground/60">Loading keys…</p>
+        ) : loadError ? (
+          <div className="py-10 text-center"><p>Keys could not be loaded.</p><Button className="mt-3" onClick={() => { setLoading(true); load(); }}>Try again</Button></div>
         ) : visible.length === 0 ? (
-          <div className="glass mx-auto max-w-md rounded-2xl p-8 text-center">
+          <div className="mx-auto max-w-md p-8 text-center">
             {keys.length === 0 ? "No keys yet — be the first to share one!" : "You've used every key here. Check back soon!"}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
             {visible.map((k) => {
               const used = copied.includes(k.id);
               const leaving = fading.includes(k.id);
               return (
-                <div key={k.id} className={`glass card-interactive flex flex-col gap-4 rounded-2xl p-5 ${leaving ? "card-leave" : "card-enter"} ${used && !leaving ? "opacity-50" : ""}`}>
-                  <div className="flex items-center justify-between gap-2">
+                <div key={k.id} className={`glass card-interactive flex flex-col gap-4 rounded-lg p-4 ${leaving ? "card-leave" : used ? "opacity-50" : "card-enter"}`}>
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                     <span className="text-sm font-semibold text-foreground/70">Referral Code</span>
                     <span className="text-xs text-foreground/50">{timeAgo(k.created_at)}</span>
                   </div>
@@ -189,12 +194,12 @@ function Index() {
                   )}
                   <div className="code-box">{k.key_value}</div>
                   <div className="grid grid-cols-2 gap-2">
-                    <button onClick={() => copy(k)} className={`${used ? "btn-muted" : "btn-brand"} whitespace-nowrap px-2`}>
-                      {used ? <><Check className="h-4 w-4" /> Already Copied</> : <><Copy className="h-4 w-4" /> Copy Code</>}
-                    </button>
-                    <a href={NUSUK_URL} target="_blank" rel="noopener noreferrer" className="btn-muted whitespace-nowrap px-2">
-                      <ExternalLink className="h-4 w-4" /> Open Nosuk App
-                    </a>
+                    <Button variant="ghost" onClick={() => copy(k)} className={`${used ? "btn-muted" : "btn-brand"} key-action`}>
+                      {used ? <><Check className="h-4 w-4" /> Used</> : <><Copy className="h-4 w-4" /> Copy Code</>}
+                    </Button>
+                    <Button asChild variant="outline" className="btn-muted key-action"><a href={NUSUK_URL} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4" /> Open Nusuk App
+                    </a></Button>
                   </div>
                 </div>
               );
@@ -202,47 +207,38 @@ function Index() {
           </div>
         )}
         </div>
+        <section className="mt-12 border-t border-input py-8" aria-labelledby="how-to-use">
+          <h2 id="how-to-use" className="text-xl font-bold">How to Use</h2>
+          <ol className="mt-5 grid gap-5 sm:grid-cols-3">
+            {[{ icon: Copy, title: "Copy Key", text: "Choose a fresh referral code." }, { icon: ExternalLink, title: "Open Nusuk App", text: "Continue to the official Nusuk platform." }, { icon: Check, title: "Paste & Redeem", text: "Enter your code in the eligible programme." }].map((step, index) => <li key={step.title} className="flex min-w-0 items-start gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-gold/40 bg-gold/10 text-gold"><step.icon className="h-5 w-5" /></div><div><h3 className="font-semibold"><span className="text-muted-foreground">{index + 1}.</span> {step.title}</h3><p className="mt-1 text-sm text-muted-foreground">{step.text}</p></div></li>)}
+          </ol>
+        </section>
       </main>
       <Footer />
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-foreground/20 p-4 backdrop-blur-sm">
-          <form onSubmit={submit} className="glass-strong relative w-full max-w-lg rounded-3xl p-7 animate-in fade-in zoom-in-95">
-            <button type="button" onClick={() => setShowModal(false)} className="absolute right-4 top-4 text-foreground/50 hover:text-foreground" aria-label="Close"><X className="h-5 w-5" /></button>
-            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-brand text-primary-foreground shadow-glow">
-              <KeyRound className="h-6 w-6" />
-            </div>
-            <h2 className="text-center text-2xl font-bold">Submit a new key</h2>
-            <p className="mt-2 text-center text-sm text-foreground/70">Help pilgrims worldwide by sharing your valid Nosuk code.</p>
-            <ul className="mt-5 space-y-2 rounded-2xl bg-muted/60 p-4 text-sm text-foreground/70">
-              <li className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-primary" /> Paste only one valid, unused referral code.</li>
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="glass-strong max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-lg p-7">
+          <DialogTitle className="text-center text-2xl">Add a new key</DialogTitle>
+          <DialogDescription className="text-center">Help pilgrims worldwide by sharing your valid Nosuk code.</DialogDescription>
+          <form onSubmit={submit}>
+            <ul className="space-y-2 py-3 text-sm text-muted-foreground">
+              <li className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-primary" /> Share one valid, unused referral code.</li>
               <li className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-primary" /> Double-check it — fake codes are removed.</li>
-              <li className="flex gap-2"><Check className="h-4 w-4 shrink-0 text-primary" /> Your code appears on the Live Board instantly.</li>
             </ul>
-            <label className="mt-5 block text-sm font-semibold" htmlFor="key-input">Your Nosuk code</label>
-            <input
-              id="key-input"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              maxLength={500}
-              placeholder="e.g. NSK-XXXX-XXXX"
-              className="input-glass mt-2"
-            />
-            <div className="mt-5 flex gap-3">
-              <button type="button" onClick={() => setShowModal(false)} className="btn-muted flex-1">Skip</button>
-              <button disabled={submitting} className="btn-brand flex-1">{submitting ? "Submitting…" : "Submit Key"}</button>
-            </div>
+            <label className="mt-3 block text-sm font-semibold" htmlFor="key-input">Your Nosuk code</label>
+            <input id="key-input" required value={value} onChange={(e) => setValue(e.target.value)} maxLength={500} placeholder="e.g. NSK-XXXX-XXXX" className="input-glass mt-2" />
+            <div className="mt-5 flex gap-3"><Button type="button" onClick={() => setShowModal(false)} variant="outline" className="flex-1">Skip</Button><Button disabled={submitting} className="btn-brand flex-1">{submitting ? "Submitting…" : "Add Key"}</Button></div>
           </form>
-        </div>
-      )}
-
+        </DialogContent>
+      </Dialog>
+      <BenefitsModal open={showBenefits} onOpenChange={setShowBenefits} />
       {showShare && <ShareModal onClose={() => setShowShare(false)} />}
     </div>
   );
 }
 
 function ShareModal({ onClose }: { onClose: () => void }) {
-  const url = typeof window !== "undefined" ? window.location.origin : "";
+  const url = SHARE_URL;
   const text = "Find free Nosuk referral codes on Nosuk key World!";
   const u = encodeURIComponent(url), t = encodeURIComponent(text);
   const items = [
@@ -256,23 +252,19 @@ function ShareModal({ onClose }: { onClose: () => void }) {
     catch { toast.error("Clipboard unavailable"); }
   };
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-foreground/20 p-4 backdrop-blur-sm" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="glass-strong relative w-full max-w-md rounded-3xl p-7 animate-in fade-in zoom-in-95">
-        <button onClick={onClose} className="absolute right-4 top-4 text-foreground/50 hover:text-foreground" aria-label="Close"><X className="h-5 w-5" /></button>
-        <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-brand text-primary-foreground shadow-glow">
-          <Globe className="h-6 w-6" />
-        </div>
-        <h2 className="text-center text-2xl font-bold">Share with the World</h2>
-        <p className="mt-2 text-center text-sm text-foreground/60">Help more pilgrims find free codes.</p>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="glass-strong max-h-[90dvh] w-[calc(100%-2rem)] max-w-md overflow-y-auto rounded-lg p-7">
+        <DialogTitle className="text-center text-2xl">Share with the World</DialogTitle>
+        <DialogDescription className="text-center">Help more pilgrims find free codes.</DialogDescription>
         <div className="mt-6 grid grid-cols-2 gap-3">
           {items.map((i) => (
-            <a key={i.label} href={i.href} target="_blank" rel="noopener noreferrer" className={`share-btn ${i.cls}`}>
+            <Button key={i.label} asChild className={`share-btn ${i.cls} h-auto whitespace-normal`}><a href={i.href} target="_blank" rel="noopener noreferrer">
               <i.icon className="h-5 w-5" /> {i.label}
-            </a>
+            </a></Button>
           ))}
         </div>
-        <button onClick={copyLink} className="btn-brand mt-3 w-full py-3"><Link2 className="h-5 w-5" /> Copy Website Link</button>
-      </div>
-    </div>
+        <Button variant="ghost" onClick={copyLink} className="btn-brand mt-3 w-full py-3"><Link2 className="h-5 w-5" /> Copy Link</Button>
+      </DialogContent>
+    </Dialog>
   );
 }
