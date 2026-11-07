@@ -1,15 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { KeyRound } from "lucide-react";
+import logo from "@/assets/nosuk-mark.asset.json";
 
 export function Footer() {
   return (
     <footer className="px-4 pb-4 pt-16 sm:px-6">
-      <div className="glass mx-auto max-w-7xl rounded-3xl px-6 py-8">
+      <div className="mx-auto max-w-screen-2xl border-t border-input px-2 py-8">
         <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
           <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-brand text-primary-foreground shadow-glow">
-              <KeyRound className="h-4 w-4" />
-            </div>
+            <img src={logo.url} alt="" className="brand-mark" />
             <span className="text-lg font-bold">Nosuk key World</span>
           </div>
           <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-semibold text-foreground/70">
