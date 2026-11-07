@@ -72,12 +72,17 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-cyan: var(--cyan);
   --color-indigo: var(--indigo);
+  --color-gold: var(--gold);
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 :root {
-  --radius: 0.875rem;
+  --radius: 0.5rem;
+  --gold: oklch(0.74 0.13 85);
+  --glass-surface: oklch(1 0 0 / 0.62);
+  --glass-strong-surface: oklch(1 0 0 / 0.88);
+  --glass-border: oklch(1 0 0 / 0.85);
   --background: oklch(0.985 0.008 220);
   --foreground: oklch(0.208 0.042 265.755);
   --card: oklch(1 0 0 / 0.6);
@@ -123,14 +128,21 @@
 }
 
 .dark {
+  --gold: oklch(0.8 0.13 85);
+  --glass-surface: oklch(0.24 0.035 265 / 0.7);
+  --glass-strong-surface: oklch(0.22 0.035 265 / 0.95);
+  --glass-border: oklch(1 0 0 / 0.16);
+  --cyan: oklch(0.8 0.13 205);
+  --aqua: oklch(0.8 0.11 180);
+  --indigo: oklch(0.72 0.17 277);
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
   --card: oklch(0.208 0.042 265.755);
   --card-foreground: oklch(0.984 0.003 247.858);
   --popover: oklch(0.208 0.042 265.755);
   --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
+  --primary: oklch(0.72 0.17 277);
+  --primary-foreground: oklch(0.129 0.042 264.695);
   --secondary: oklch(0.279 0.041 260.031);
   --secondary-foreground: oklch(0.984 0.003 247.858);
   --muted: oklch(0.279 0.041 260.031);
@@ -171,23 +183,19 @@
 body { font-family: var(--font-sans); }
 
 @utility bg-app {
-  background:
-    radial-gradient(60rem 40rem at 10% -10%, color-mix(in oklab, var(--cyan) 30%, transparent), transparent 60%),
-    radial-gradient(50rem 40rem at 100% 10%, color-mix(in oklab, var(--indigo) 22%, transparent), transparent 60%),
-    radial-gradient(40rem 30rem at 50% 110%, color-mix(in oklab, var(--aqua) 25%, transparent), transparent 60%),
-    var(--background);
+  background: linear-gradient(125deg, color-mix(in oklab, var(--cyan) 8%, var(--background)), var(--background) 45%, color-mix(in oklab, var(--gold) 8%, var(--background)));
   background-attachment: fixed;
 }
 @utility glass {
-  background: oklch(1 0 0 / 0.55);
+  background: var(--glass-surface);
   backdrop-filter: blur(18px) saturate(160%);
-  border: 1px solid oklch(1 0 0 / 0.75);
+  border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-glass);
 }
 @utility glass-strong {
-  background: oklch(1 0 0 / 0.72);
+  background: var(--glass-strong-surface);
   backdrop-filter: blur(28px) saturate(180%);
-  border: 1px solid oklch(1 0 0 / 0.85);
+  border: 1px solid var(--glass-border);
   box-shadow: 0 30px 80px -20px color-mix(in oklab, var(--indigo) 35%, transparent);
 }
 @utility bg-gradient-brand { background-image: var(--gradient-brand); }
@@ -212,8 +220,8 @@ body { font-family: var(--font-sans); }
 }
 @utility btn-muted {
   @apply btn-base;
-  background: oklch(1 0 0 / 0.6); border: 1px solid var(--input); color: var(--foreground);
-  &:hover { background: oklch(1 0 0 / 0.9); }
+  background: var(--glass-surface); border: 1px solid var(--input); color: var(--foreground);
+  &:hover { background: var(--glass-strong-surface); }
 }
 @utility btn-danger {
   @apply btn-base;
@@ -223,7 +231,7 @@ body { font-family: var(--font-sans); }
 }
 @utility input-glass {
   width: 100%; border-radius: 0.75rem; padding: 0.75rem 1rem;
-  background: oklch(1 0 0 / 0.7); border: 1px solid var(--input); outline: none;
+  background: var(--glass-strong-surface); border: 1px solid var(--input); outline: none;
   &:focus { border-color: var(--ring); box-shadow: 0 0 0 4px color-mix(in oklab, var(--ring) 20%, transparent); }
 }
 @utility badge-verified {
@@ -244,8 +252,8 @@ body { font-family: var(--font-sans); }
 
 @utility code-box {
   border-radius: 0.875rem; padding: 0.9rem 1rem; text-align: center;
-  font-family: var(--font-mono); font-size: 1rem; font-weight: 600; letter-spacing: 0.04em; word-break: break-all;
-  background: linear-gradient(135deg, color-mix(in oklab, var(--cyan) 14%, white), color-mix(in oklab, var(--indigo) 10%, white));
+  font-family: var(--font-mono); font-size: 1.15rem; font-weight: 600; letter-spacing: 0; word-break: break-all;
+  background: linear-gradient(135deg, color-mix(in oklab, var(--cyan) 12%, var(--background)), color-mix(in oklab, var(--gold) 9%, var(--background)));
   border: 1px dashed color-mix(in oklab, var(--indigo) 40%, transparent);
 }
 @utility tab {
@@ -260,10 +268,10 @@ body { font-family: var(--font-sans); }
 
 @utility glass-pill {
   border-radius: 999px;
-  background: oklch(1 0 0 / 0.55);
+  background: var(--glass-surface);
   backdrop-filter: blur(18px) saturate(160%);
-  border: 1px solid oklch(1 0 0 / 0.8);
-  box-shadow: var(--shadow-glass), inset 0 1px 0 oklch(1 0 0 / 0.9);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glass);
 }
 @utility card-interactive {
   transition: transform .3s ease, box-shadow .3s ease, opacity .4s ease;
@@ -275,10 +283,10 @@ body { font-family: var(--font-sans); }
 @keyframes card-out { to { opacity: 0; transform: scale(.92) translateY(-8px); } }
 @utility btn-glow {
   @apply btn-base;
-  background: oklch(1 0 0 / 0.7); color: var(--indigo);
+  background: var(--glass-surface); color: var(--indigo);
   border: 1px solid color-mix(in oklab, var(--indigo) 35%, transparent);
   animation: share-glow 2.6s ease-in-out infinite;
-  &:hover { background: oklch(1 0 0 / 0.95); }
+  &:hover { background: var(--glass-strong-surface); }
 }
 @keyframes share-glow {
   0%,100% { box-shadow: 0 0 10px color-mix(in oklab, var(--cyan) 45%, transparent); }
@@ -294,3 +302,12 @@ body { font-family: var(--font-sans); }
 @utility share-whatsapp { background: var(--whatsapp); box-shadow: 0 10px 24px -10px var(--whatsapp); }
 @utility share-x { background: var(--x-brand); box-shadow: 0 10px 24px -10px var(--x-brand); }
 @utility share-telegram { background: var(--telegram); box-shadow: 0 10px 24px -10px var(--telegram); }
+
+html { letter-spacing: 0; color-scheme: light; }
+html.dark { color-scheme: dark; }
+.brand-mark { width: 52px; height: 58px; object-fit: contain; border-radius: 8px; }
+.brand-wordmark { width: 340px; max-width: 100%; border-radius: 8px; }
+.key-action { min-height: 42px; height: auto; white-space: normal; font-size: 12px; padding: 8px; line-height: 1.35; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}
