@@ -14,7 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      nusuk_keys: {
+        Row: {
+          created_at: string
+          id: string
+          is_admin_drop: boolean
+          key_value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_admin_drop?: boolean
+          key_value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_admin_drop?: boolean
+          key_value?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
