@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { bulkKeyRows } from "@/lib/bulk-keys";
 
 const ADMIN_EMAIL = "siamhosain720@gmail.com";
 const ADMIN_PASSWORD = "Admin@12345";
@@ -39,4 +40,15 @@ export const adminDeleteKey = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("nusuk_keys").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const adminBulkAddKeys = createServerFn({ method: "POST" })
+  .inputValidator((i) => creds.extend({ input: z.string() }).parse(i))
+  .handler(async ({ data }) => {
+    check(data);
+    const rows = bulkKeyRows(data.input);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("nusuk_keys").insert(rows);
+    if (error) throw new Error("Bulk submission failed. No keys were added.");
+    return { count: rows.length };
   });

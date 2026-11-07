@@ -2,8 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { LogOut, ShieldCheck, Trash2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Button } from "@/components/ui/button";
+import { bulkKeyRows } from "@/lib/bulk-keys";
 import { supabase } from "@/integrations/supabase/client";
-import { adminAddKey, adminDeleteKey, adminLogin } from "@/lib/admin.functions";
+import { adminAddKey, adminBulkAddKeys, adminDeleteKey, adminLogin } from "@/lib/admin.functions";
 import { Footer } from "@/components/Footer";
 
 export const Route = createFileRoute("/admin")({
@@ -32,6 +35,9 @@ function Admin() {
   const [busy, setBusy] = useState(false);
   const [keys, setKeys] = useState<Key[]>([]);
   const [newKey, setNewKey] = useState("");
+  const [bulkInput, setBulkInput] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const submitBulkKeys = useServerFn(adminBulkAddKeys);
 
   useEffect(() => {
     const s = sessionStorage.getItem(SS);
@@ -87,6 +93,23 @@ function Admin() {
 
   const logout = () => { sessionStorage.removeItem(SS); setCreds(null); };
 
+  const bulkAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!creds || bulkBusy) return;
+    try {
+      bulkKeyRows(bulkInput);
+      setBulkBusy(true);
+      const result = await submitBulkKeys({ data: { ...creds, input: bulkInput } });
+      toast.success(`Successfully added ${result.count} keys!`);
+      setBulkInput("");
+      await load();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Bulk submission failed. Please try again.");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
   if (!creds) {
     return (
       <div className="flex min-h-screen flex-col bg-app">
@@ -118,6 +141,22 @@ function Admin() {
         <form onSubmit={add} className="glass mt-6 flex flex-col gap-3 rounded-2xl p-5 sm:flex-row">
           <input value={newKey} onChange={(e) => setNewKey(e.target.value)} maxLength={500} placeholder="New verified key" className="input-glass flex-1" />
           <button disabled={busy} className="btn-brand"><ShieldCheck className="h-4 w-4" /> Drop Verified Key</button>
+        </form>
+
+        <form onSubmit={bulkAdd} className="mt-6 space-y-3 border-t border-input pt-6">
+          <label htmlFor="bulk-keys" className="block font-semibold">Bulk Add Keys (একসাথে অনেকগুলো)</label>
+          <textarea
+            id="bulk-keys"
+            value={bulkInput}
+            onChange={(e) => setBulkInput(e.target.value)}
+            placeholder={"Paste keys separated by commas or new lines. Example: KEY-1, KEY-2\nKEY-3"}
+            rows={6}
+            disabled={bulkBusy}
+            className="input-glass block min-h-36 resize-y"
+          />
+          <Button type="submit" disabled={bulkBusy} className="btn-brand h-auto w-full sm:w-auto">
+            <ShieldCheck className="h-4 w-4" /> {bulkBusy ? "Submitting…" : "Bulk Submit Keys"}
+          </Button>
         </form>
 
         <div className="glass mt-6 overflow-x-auto rounded-2xl">
