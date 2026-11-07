@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import logo from "@/assets/nosuk-mark.asset.json";
+import logo from "@/assets/nosuk-brand-mark.asset.json";
 
 export function Footer() {
   return (

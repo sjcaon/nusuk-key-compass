@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BenefitsModal } from "@/components/BenefitsModal";
-import logo from "@/assets/nosuk-mark.asset.json";
-import wordmark from "@/assets/nosuk-wordmark.asset.json";
+import logo from "@/assets/nosuk-brand-mark.asset.json";
+import wordmark from "@/assets/nosuk-brand-name.asset.json";
 import { COPIED_STORAGE as LS, HIDE_STORAGE as HIDE, SHARE_URL, readCopied, readHideUsed, sortKeys, visibleKeys } from "@/lib/key-board";
 
 export const Route = createFileRoute("/")({

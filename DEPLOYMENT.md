@@ -1,6 +1,6 @@
 # Nosuk key World — Vercel
 
-The repository includes a separate Vercel configuration. It selects Nitro's Vercel preset only for that deployment; Lovable's existing preview and publishing configuration remain unchanged.
+The repository includes a separate Vercel configuration. Its `NITRO_PRESET=vercel` build command selects Nitro's Vercel preset only outside Lovable; Lovable's existing preview and publishing configuration remain unchanged.
 
 ## Connect and deploy
 
