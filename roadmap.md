@@ -1,4 +1,5 @@
 # Production brief
+- [ ] Add and verify admin-only bulk key parsing, atomic insert, exact count, and table refresh.
 - [x] Apply uploaded logo, light/dark glass theme, sharing link, benefits, and guide.
 - [x] Preserve database rows and copy tracking; default hide-used to on and sort newest first.
 - [x] Test board, sharing, theme, and existing admin flow.
