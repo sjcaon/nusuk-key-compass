@@ -1,8 +1,30 @@
+import { Link } from "@tanstack/react-router";
+import { KeyRound } from "lucide-react";
+
 export function Footer() {
   return (
-    <footer className="glass mx-4 mb-4 mt-16 rounded-2xl px-6 py-5 text-center text-sm text-foreground/80">
-      Developed by <span className="font-semibold text-foreground">Shoibur Rahman</span> | Support:{" "}
-      <a href="tel:+8801752200299" className="font-semibold text-gradient">+880 1752-200299</a>
+    <footer className="px-4 pb-4 pt-16 sm:px-6">
+      <div className="glass mx-auto max-w-7xl rounded-3xl px-6 py-8">
+        <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+          <div className="flex items-center gap-2">
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-brand text-primary-foreground shadow-glow">
+              <KeyRound className="h-4 w-4" />
+            </div>
+            <span className="text-lg font-bold">Nosuk key World</span>
+          </div>
+          <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-semibold text-foreground/70">
+            <Link to="/terms" className="hover:text-primary">Terms of Service</Link>
+            <Link to="/privacy" className="hover:text-primary">Privacy Policy</Link>
+            <Link to="/community" className="hover:text-primary">Global Community</Link>
+            <Link to="/admin" className="hover:text-primary">Admin</Link>
+          </nav>
+        </div>
+        <div className="mt-6 border-t border-foreground/10 pt-5 text-center text-sm text-foreground/70">
+          Developed by <span className="font-semibold text-foreground">Shoibur Rahman</span> | Support:{" "}
+          <a href="tel:+8801752200299" className="font-semibold text-gradient">+880 1752-200299</a>
+          <div className="mt-1 text-xs text-foreground/50">© {new Date().getFullYear()} Nosuk key World. All rights reserved.</div>
+        </div>
+      </div>
     </footer>
   );
 }
