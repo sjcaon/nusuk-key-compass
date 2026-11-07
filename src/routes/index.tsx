@@ -51,12 +51,12 @@ function Index() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const v = value.trim();
-    if (!v) return toast.error("Please enter a key");
-    if (v.length > 500) return toast.error("Key is too long");
+    if (!v) { toast.error("Please enter a key"); return; }
+    if (v.length > 500) { toast.error("Key is too long"); return; }
     setSubmitting(true);
     const { error } = await supabase.from("nusuk_keys").insert({ key_value: v });
     setSubmitting(false);
-    if (error) return toast.error("Submission failed");
+    if (error) { toast.error("Submission failed"); return; }
     toast.success("Thank you! Key shared.");
     setValue("");
     setShowModal(false);
@@ -67,7 +67,8 @@ function Index() {
     try {
       await navigator.clipboard.writeText(k.key_value);
     } catch {
-      return toast.error("Clipboard unavailable");
+      toast.error("Clipboard unavailable");
+      return;
     }
     toast.success("Copied!");
     const next = Array.from(new Set([...copied, k.id]));
