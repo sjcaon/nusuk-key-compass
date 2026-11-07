@@ -237,3 +237,19 @@ body { font-family: var(--font-sans); }
   0%,100% { box-shadow: 0 0 8px color-mix(in oklab, var(--cyan) 60%, transparent); }
   50% { box-shadow: 0 0 22px color-mix(in oklab, var(--aqua) 90%, transparent); }
 }
+
+@utility code-box {
+  border-radius: 0.875rem; padding: 0.9rem 1rem; text-align: center;
+  font-family: var(--font-mono); font-size: 1rem; font-weight: 600; letter-spacing: 0.04em; word-break: break-all;
+  background: linear-gradient(135deg, color-mix(in oklab, var(--cyan) 14%, white), color-mix(in oklab, var(--indigo) 10%, white));
+  border: 1px dashed color-mix(in oklab, var(--indigo) 40%, transparent);
+}
+@utility tab {
+  border-radius: 0.6rem; padding: 0.4rem 0.85rem; font-size: 0.82rem; font-weight: 600; color: var(--muted-foreground); cursor: pointer;
+  &:hover { color: var(--foreground); }
+}
+@utility tab-active {
+  @apply tab;
+  background: var(--gradient-brand); color: var(--primary-foreground); box-shadow: var(--shadow-glow);
+  &:hover { color: var(--primary-foreground); }
+}

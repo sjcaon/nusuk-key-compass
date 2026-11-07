@@ -9,9 +9,9 @@ import { Footer } from "@/components/Footer";
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Admin — Nusuk Key World" },
+      { title: "Admin — Nosuk key World" },
       { name: "description", content: "Admin dashboard for managing Nusuk keys." },
-      { property: "og:title", content: "Admin — Nusuk Key World" },
+      { property: "og:title", content: "Admin — Nosuk key World" },
       { property: "og:description", content: "Manage verified drops and remove spam keys." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
