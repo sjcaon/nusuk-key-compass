@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { BenefitsModal } from "@/components/BenefitsModal";
+import { useLiveStats } from "@/hooks/use-live-stats";
 import logo from "@/assets/nosuk-brand-mark.asset.json";
 import wordmark from "@/assets/nosuk-brand-name.asset.json";
-import { COPIED_STORAGE as LS, HIDE_STORAGE as HIDE, SHARE_URL, readCopied, readHideUsed, sortKeys, visibleKeys } from "@/lib/key-board";
+import { COPIED_STORAGE as LS, HIDE_STORAGE as HIDE, SHARE_URL, readCopied, readHideUsed, sortKeys, visibleKeys, communityKeySchema, nusukKeyUrl } from "@/lib/key-board";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -28,7 +29,6 @@ export const Route = createFileRoute("/")({
 });
 
 type Key = { id: string; key_value: string; is_admin_drop: boolean; created_at: string };
-const NUSUK_URL = "https://www.nusuk.sa/";
 
 function timeAgo(d: string) {
   const s = Math.max(0, Math.floor((Date.now() - +new Date(d)) / 1000));
@@ -39,6 +39,7 @@ function timeAgo(d: string) {
 }
 
 function Index() {
+  const { totalViews, activeUsers } = useLiveStats();
   const [showModal, setShowModal] = useState(true);
   const [keys, setKeys] = useState<Key[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,17 +75,32 @@ function Index() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const v = value.trim();
-    if (!v) { toast.error("Please enter a key"); return; }
-    if (v.length > 500) { toast.error("Key is too long"); return; }
+    if (submitting) return;
+    const validated = communityKeySchema.safeParse(value);
+    if (!validated.success) { toast.error("Use NG- followed by exactly 8 letters or numbers."); return; }
+    const v = validated.data;
     setSubmitting(true);
-    const { error } = await supabase.from("nusuk_keys").insert({ key_value: v });
-    setSubmitting(false);
-    if (error) { toast.error("Submission failed"); return; }
-    toast.success("Thank you! Key shared.");
-    setValue("");
-    setShowModal(false);
-    load();
+    try {
+      const { data: existing, error: lookupError } = await supabase.from("nusuk_keys").select("id").eq("key_value", v).limit(1);
+      if (lookupError) { toast.error("Could not check this key. Please try again."); return; }
+      if (existing?.length) {
+        setValue("");
+        toast.error("This key has already been shared!");
+        return;
+      }
+      const { error } = await supabase.from("nusuk_keys").insert({ key_value: v });
+      if (error?.code === "23505") {
+        setValue("");
+        toast.error("This key has already been shared!");
+        return;
+      }
+      if (error) { toast.error("Submission failed"); return; }
+      toast.success("Thank you! Key shared.");
+      setValue("");
+      setShowModal(false);
+      await load();
+    } catch { toast.error("Submission failed. Please try again."); }
+    finally { setSubmitting(false); }
   };
 
   const copy = async (k: Key) => {
@@ -108,8 +124,8 @@ function Index() {
   const visible = visibleKeys(sorted, copied, hideUsed, fading);
   const stats = [
     { label: "Total Shared", value: keys.length.toLocaleString(), icon: KeyRound },
-    { label: "Active Users", value: "—", icon: Users },
-    { label: "Total Views", value: "—", icon: Eye },
+    { label: "Active Users", value: activeUsers?.toLocaleString() ?? "—", icon: Users },
+    { label: "Total Views", value: totalViews?.toLocaleString() ?? "—", icon: Eye },
   ];
 
   return (
@@ -197,7 +213,7 @@ function Index() {
                     <Button variant="ghost" onClick={() => copy(k)} className={`${used ? "btn-muted" : "btn-brand"} key-action`}>
                       {used ? <><Check className="h-4 w-4" /> Used</> : <><Copy className="h-4 w-4" /> Copy Code</>}
                     </Button>
-                    <Button asChild variant="outline" className="btn-muted key-action"><a href={NUSUK_URL} target="_blank" rel="noopener noreferrer">
+                    <Button asChild variant="outline" className="btn-muted key-action"><a href={nusukKeyUrl(k.key_value)} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-4 w-4" /> Open Nusuk App
                     </a></Button>
                   </div>

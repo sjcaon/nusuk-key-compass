@@ -38,6 +38,7 @@ function Admin() {
   const [bulkInput, setBulkInput] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
   const submitBulkKeys = useServerFn(adminBulkAddKeys);
+  const deleteKey = useServerFn(adminDeleteKey);
 
   useEffect(() => {
     const s = sessionStorage.getItem(SS);
@@ -83,9 +84,10 @@ function Admin() {
   const del = async (id: string) => {
     if (!creds || !confirm("Delete this key?")) return;
     try {
-      await adminDeleteKey({ data: { ...creds, id } });
-      toast.success("Deleted");
+      await deleteKey({ data: { ...creds, id } });
+      toast.success("Key Deleted");
       setKeys((k) => k.filter((x) => x.id !== id));
+      await load();
     } catch (err) {
       toast.error((err as Error).message);
     }

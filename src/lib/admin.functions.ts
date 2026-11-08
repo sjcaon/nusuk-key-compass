@@ -37,8 +37,9 @@ export const adminDeleteKey = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     check(data);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.from("nusuk_keys").delete().eq("id", data.id);
+    const { data: deleted, error } = await supabaseAdmin.from("nusuk_keys").delete().eq("id", data.id).select("id").maybeSingle();
     if (error) throw new Error(error.message);
+    if (!deleted) throw new Error("This key no longer exists. Refresh the table.");
     return { ok: true };
   });
 

@@ -34,3 +34,5 @@ use the editor.
 - Use shared semantic glass tokens and the document-level theme class across all pages so both modes remain consistent.
 - Select Nitro's Vercel preset through the Vercel-only build environment, leaving Lovable's default deployment target unchanged.
 - Bulk admin submissions reuse the existing authorized server connection and insert a parsed batch in one statement, with browser-safe parsing shared by client validation and tests.
+- Community inserts are validated in both the browser and database; a locked registry prevents concurrent duplicates without removing historical rows or changing bulk-admin parsing.
+- Page-load counts use an idempotent database RPC; Realtime Presence counts distinct browser visitors across tabs, and disconnected stats remain unknown rather than displaying fabricated counts.
