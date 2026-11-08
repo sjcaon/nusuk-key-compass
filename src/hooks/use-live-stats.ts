@@ -14,7 +14,7 @@ export function useLiveStats() {
     let recorded = false;
     pageLoadId ??= crypto.randomUUID();
     const loadId = pageLoadId;
-    let visitorId = crypto.randomUUID();
+    let visitorId: string = crypto.randomUUID();
     try {
       const saved = localStorage.getItem("nosuk_visitor_id");
       if (saved) visitorId = saved;
