@@ -14,6 +14,18 @@ export type Database = {
   }
   public: {
     Tables: {
+      key_submission_registry: {
+        Row: {
+          key_value: string
+        }
+        Insert: {
+          key_value: string
+        }
+        Update: {
+          key_value?: string
+        }
+        Relationships: []
+      }
       nusuk_keys: {
         Row: {
           created_at: string
@@ -35,12 +47,42 @@ export type Database = {
         }
         Relationships: []
       }
+      page_load_events: {
+        Row: {
+          created_at: string
+          load_id: string
+        }
+        Insert: {
+          created_at?: string
+          load_id: string
+        }
+        Update: {
+          created_at?: string
+          load_id?: string
+        }
+        Relationships: []
+      }
+      site_statistics: {
+        Row: {
+          id: number
+          total_views: number
+        }
+        Insert: {
+          id?: number
+          total_views?: number
+        }
+        Update: {
+          id?: number
+          total_views?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      record_page_load: { Args: { p_load_id: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never
