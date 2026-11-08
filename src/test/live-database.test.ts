@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { supabase } from "@/integrations/supabase/client";
 
 // Opt in against the connected backend; these checks never add keys or delete historical data.
-describe.runIf(process.env.RUN_LIVE_DATABASE_TESTS === "1")("Database-enforced public rules", () => {
+describe.runIf(process.env["RUN_LIVE_DATABASE_TESTS"] === "1")("Database-enforced public rules", () => {
   it("rejects malformed keys even when bypassing the form", async () => {
     const { error } = await supabase.from("nusuk_keys").insert({ key_value: "INVALID-SPAM" });
     expect(error?.code).toBe("23514");
