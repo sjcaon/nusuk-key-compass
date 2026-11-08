@@ -46,8 +46,6 @@ export function useLiveStats() {
     const channel = supabase.channel(`nosuk-live-board`, { config: { presence: { key: visitorId } } });
     channel.on("presence", { event: "sync" }, () => {
       if (alive) setActiveUsers(connectedUsers(channel.presenceState<{ visitor_id: string }>()));
-    }).on("postgres_changes", { event: "*", schema: "public", table: "site_statistics" }, () => {
-      void refreshViews();
     }).subscribe(async (status) => {
       if (!alive) return;
       if (status === "SUBSCRIBED") {
@@ -57,12 +55,17 @@ export function useLiveStats() {
         setActiveUsers(null);
       }
     });
+    const statisticsChannel = supabase.channel(`nosuk-statistics-${crypto.randomUUID()}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "site_statistics" }, () => {
+        void refreshViews();
+      }).subscribe();
     void refreshViews();
     const timer = window.setInterval(() => { void refreshViews(); }, 30000);
     return () => {
       alive = false;
       window.clearInterval(timer);
       void supabase.removeChannel(channel);
+      void supabase.removeChannel(statisticsChannel);
     };
   }, []);
 

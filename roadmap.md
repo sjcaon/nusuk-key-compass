@@ -5,6 +5,6 @@
 - [x] Test board, sharing, theme, and existing admin flow.
 - [x] Provide Vercel deployment configuration and document deployment limitations.
 - [ ] Verify deployed Vercel admin operations — blocked by unavailable managed privileged credentials and no Vercel deployment access.
-- [ ] Add dynamic per-code Nusuk links and strict community format/duplicate checks.
-- [ ] Verify authorized admin deletion and immediate table refresh.
-- [ ] Add durable page-load counting and live visitor presence; test the complete flows.
+- [x] Add dynamic per-code Nusuk links and strict community format/duplicate checks.
+- [x] Verify authorized admin deletion and immediate table refresh.
+- [x] Add durable page-load counting and live visitor presence; test the complete flows.
