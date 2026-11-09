@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Copy, Check, KeyRound, ShieldCheck, Plus, Users, Eye, ExternalLink, Share2, X, Globe, Facebook, MessageCircle, Twitter, Send, Link2, HeartHandshake, ArrowRight } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -12,7 +12,8 @@ import { BenefitsModal } from "@/components/BenefitsModal";
 import { useLiveStats } from "@/hooks/use-live-stats";
 import logo from "@/assets/nosuk-brand-mark.asset.json";
 import wordmark from "@/assets/nosuk-brand-name.asset.json";
-import { COPIED_STORAGE as LS, HIDE_STORAGE as HIDE, SHARE_URL, readCopied, readHideUsed, sortKeys, visibleKeys, communityKeySchema, nusukKeyUrl } from "@/lib/key-board";
+import { COPIED_STORAGE as LS, HIDE_STORAGE as HIDE, SHARE_URL, readCopied, readHideUsed, boardCards, appendKeys, PINNED_KEY, KEY_PAGE_SIZE, communityKeySchema, nusukKeyUrl } from "@/lib/key-board";
+import { fetchKeyPage, fetchKeyCount } from "@/lib/board-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -43,6 +44,11 @@ function Index() {
   const [showModal, setShowModal] = useState(true);
   const [keys, setKeys] = useState<Key[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalShared, setTotalShared] = useState<number | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const nextOffset = useRef(0);
+  const fetching = useRef(false);
   const [copied, setCopied] = useState<string[]>([]);
   const [value, setValue] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -55,14 +61,36 @@ function Index() {
   const [sort, setSort] = useState<"newest" | "active">("newest");
 
   const load = async () => {
-    const { data, error } = await supabase
-      .from("nusuk_keys")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setLoadError(Boolean(error));
-    if (error) toast.error("Could not load keys");
-    else setKeys(data ?? []);
-    setLoading(false);
+    if (fetching.current) return;
+    fetching.current = true;
+    try {
+      const [page, counter] = await Promise.all([fetchKeyPage(), fetchKeyCount()]);
+      setTotalShared(counter.error ? null : counter.count);
+      setLoadError(Boolean(page.error));
+      if (page.error) toast.error("Could not load keys");
+      else {
+        const rows = page.data ?? [];
+        setKeys(rows);
+        nextOffset.current = rows.length;
+        setHasMore(rows.length === KEY_PAGE_SIZE && (counter.count === null || rows.length < counter.count));
+      }
+    } catch { setLoadError(true); toast.error("Could not load keys"); }
+    finally { fetching.current = false; setLoading(false); }
+  };
+
+  const loadMore = async () => {
+    if (fetching.current || !hasMore) return;
+    fetching.current = true;
+    setLoadingMore(true);
+    try {
+      const { data, error } = await fetchKeyPage(nextOffset.current);
+      if (error) { toast.error("Could not load more keys. Please try again."); return; }
+      const rows = data ?? [];
+      setKeys((current) => appendKeys(current, rows));
+      nextOffset.current += rows.length;
+      setHasMore(rows.length === KEY_PAGE_SIZE && (totalShared === null || nextOffset.current < totalShared));
+    } catch { toast.error("Could not load more keys. Please try again."); }
+    finally { fetching.current = false; setLoadingMore(false); }
   };
 
   useEffect(() => {
@@ -103,6 +131,18 @@ function Index() {
     finally { setSubmitting(false); }
   };
 
+  const markCopied = (k: Key) => {
+    setCopied((current) => {
+      const next = Array.from(new Set([...current, k.id]));
+      try { localStorage.setItem(LS, JSON.stringify(next)); } catch { toast.error("Copied, but tracking could not be saved on this device."); }
+      return next;
+    });
+    if (hideUsed && k.id !== PINNED_KEY.id && !copied.includes(k.id)) {
+      setFading((f) => Array.from(new Set([...f, k.id])));
+      setTimeout(() => setFading((f) => f.filter((x) => x !== k.id)), 450);
+    }
+  };
+
   const copy = async (k: Key) => {
     try {
       await navigator.clipboard.writeText(k.key_value);
@@ -111,19 +151,22 @@ function Index() {
       return;
     }
     toast.success("Copied!");
-    const next = Array.from(new Set([...copied, k.id]));
-    if (hideUsed && !copied.includes(k.id)) {
-      setFading((f) => [...f, k.id]);
-      setTimeout(() => setFading((f) => f.filter((x) => x !== k.id)), 450);
-    }
-    setCopied(next);
-    try { localStorage.setItem(LS, JSON.stringify(next)); } catch { toast.error("Copied, but tracking could not be saved on this device."); }
+    markCopied(k);
   };
 
-  const sorted = sortKeys(keys, copied, sort === "active");
-  const visible = visibleKeys(sorted, copied, hideUsed, fading);
+  const openKey = (e: React.MouseEvent<HTMLAnchorElement>, k: Key) => {
+    e.preventDefault();
+    window.open(nusukKeyUrl(k.key_value), "_blank", "noopener,noreferrer");
+    // Start clipboard access in the same user gesture as opening the tab.
+    const copying = navigator.clipboard?.writeText(k.key_value);
+    markCopied(k);
+    if (copying) void copying.then(() => toast.success("Copied!")).catch(() => toast.error("Nusuk opened, but clipboard unavailable."));
+    else toast.error("Nusuk opened, but clipboard unavailable.");
+  };
+
+  const visible = boardCards(keys, copied, hideUsed, fading, sort === "active");
   const stats = [
-    { label: "Total Shared", value: keys.length.toLocaleString(), icon: KeyRound },
+    { label: "Total Shared", value: totalShared?.toLocaleString() ?? "—", icon: KeyRound },
     { label: "Active Users", value: activeUsers?.toLocaleString() ?? "—", icon: Users },
     { label: "Total Views", value: totalViews?.toLocaleString() ?? "—", icon: Eye },
   ];
@@ -203,17 +246,17 @@ function Index() {
                 <div key={k.id} className={`glass card-interactive flex flex-col gap-4 rounded-lg p-4 ${leaving ? "card-leave" : used ? "opacity-50" : "card-enter"}`}>
                   <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                     <span className="text-sm font-semibold text-foreground/70">Referral Code</span>
-                    <span className="text-xs text-foreground/50">{timeAgo(k.created_at)}</span>
+                    <span className={`text-xs ${k.id === PINNED_KEY.id ? "font-semibold text-gold" : "text-foreground/50"}`}>{k.id === PINNED_KEY.id ? "Pinned · Sponsored" : timeAgo(k.created_at)}</span>
                   </div>
                   {k.is_admin_drop && (
                     <span className="badge-verified self-start"><ShieldCheck className="h-3.5 w-3.5" /> Verified Admin Drop</span>
                   )}
-                  <div className="code-box">{k.key_value}</div>
+                  <div className={`code-box ${k.id === PINNED_KEY.id ? "ring-1 ring-gold/60" : ""}`}>{k.key_value}</div>
                   <div className="grid grid-cols-2 gap-2">
                     <Button variant="ghost" onClick={() => copy(k)} className={`${used ? "btn-muted" : "btn-brand"} key-action`}>
                       {used ? <><Check className="h-4 w-4" /> Used</> : <><Copy className="h-4 w-4" /> Copy Code</>}
                     </Button>
-                    <Button asChild variant="outline" className="btn-muted key-action"><a href={nusukKeyUrl(k.key_value)} target="_blank" rel="noopener noreferrer">
+                    <Button asChild variant="outline" className="btn-muted key-action"><a href={nusukKeyUrl(k.key_value)} onClick={(e) => openKey(e, k)} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-4 w-4" /> Open Nusuk App
                     </a></Button>
                   </div>
@@ -222,6 +265,7 @@ function Index() {
             })}
           </div>
         )}
+        {!loading && !loadError && hasMore && <div className="mt-6 flex justify-center"><Button variant="outline" className="btn-muted" disabled={loadingMore} onClick={loadMore}>{loadingMore ? "Loading…" : "Load More"}</Button></div>}
         </div>
         <section className="mt-12 border-t border-input py-8" aria-labelledby="how-to-use">
           <h2 id="how-to-use" className="text-xl font-bold">How to Use</h2>
@@ -232,8 +276,8 @@ function Index() {
       </main>
       <Footer />
 
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="glass-strong max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-lg p-7">
+      {showModal && <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent onPointerDownOutside={() => setShowModal(false)} className="glass-strong max-h-[90dvh] w-[calc(100%-2rem)] overflow-y-auto rounded-lg p-7">
           <DialogTitle className="text-center text-2xl">Add a new key</DialogTitle>
           <DialogDescription className="text-center">Help pilgrims worldwide by sharing your valid Nosuk code.</DialogDescription>
           <form onSubmit={submit}>
@@ -246,7 +290,7 @@ function Index() {
             <div className="mt-5 flex gap-3"><Button type="button" onClick={() => setShowModal(false)} variant="outline" className="flex-1">Skip</Button><Button disabled={submitting} className="btn-brand flex-1">{submitting ? "Submitting…" : "Add Key"}</Button></div>
           </form>
         </DialogContent>
-      </Dialog>
+      </Dialog>}
       <BenefitsModal open={showBenefits} onOpenChange={setShowBenefits} />
       {showShare && <ShareModal onClose={() => setShowShare(false)} />}
     </div>
