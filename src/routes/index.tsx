@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { InstallAppButton } from "@/components/InstallAppButton";
 import { BenefitsModal } from "@/components/BenefitsModal";
 import { useLiveStats } from "@/hooks/use-live-stats";
 import logo from "@/assets/nosuk-brand-mark.asset.json";
@@ -154,14 +155,17 @@ function Index() {
     markCopied(k);
   };
 
-  const openKey = (e: React.MouseEvent<HTMLAnchorElement>, k: Key) => {
+  const openKey = async (e: React.MouseEvent<HTMLAnchorElement>, k: Key) => {
     e.preventDefault();
     window.open(nusukKeyUrl(k.key_value), "_blank", "noopener,noreferrer");
     // Start clipboard access in the same user gesture as opening the tab.
-    const copying = navigator.clipboard?.writeText(k.key_value);
     markCopied(k);
-    if (copying) void copying.then(() => toast.success("Copied!")).catch(() => toast.error("Nusuk opened, but clipboard unavailable."));
-    else toast.error("Nusuk opened, but clipboard unavailable.");
+    try {
+      await navigator.clipboard.writeText(k.key_value);
+      toast.success("Copied!");
+    } catch {
+      toast.info("Opening Nusuk App...");
+    }
   };
 
   const visible = boardCards(keys, copied, hideUsed, fading, sort === "active");
@@ -181,6 +185,7 @@ function Index() {
           </div>
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
             <ThemeToggle />
+            <InstallAppButton />
             <Button variant="ghost" onClick={() => setShowShare(true)} className="btn-glow" aria-label="Share App">
               <Share2 className="h-4 w-4" /><span className="hidden sm:inline">Share App</span>
             </Button>
