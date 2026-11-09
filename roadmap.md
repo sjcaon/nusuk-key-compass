@@ -1,4 +1,7 @@
 # Production brief
+- [x] Pin NG-KASwudnf, fix modal dismissal, and combine dynamic Nusuk opening with copy tracking.
+- [x] Paginate the board in batches of 50 and show an independent exact Total Shared count.
+- [x] Test requested board flows without changing glass styling or Hide Used Keys rules.
 - [x] Add and verify admin-only bulk key parsing, atomic insert, exact count, and table refresh.
 - [x] Apply uploaded logo, light/dark glass theme, sharing link, benefits, and guide.
 - [x] Preserve database rows and copy tracking; default hide-used to on and sort newest first.

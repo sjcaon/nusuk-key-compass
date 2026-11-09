@@ -31,6 +31,7 @@ use the editor.
 
 - Preserve the existing `nusuk_keys` table name across board and admin calls to keep historical rows and generated client types intact.
 - Keep copy storage parsing, visibility, sharing destination, and chronological sorting in the browser-safe key-board module so behavior has direct unit coverage.
+- Fetch public board pages and exact counts independently through the browser-safe board-data module; deterministic ordering and ID deduplication keep Load More bounded and stable.
 - Use shared semantic glass tokens and the document-level theme class across all pages so both modes remain consistent.
 - Select Nitro's Vercel preset through the Vercel-only build environment, leaving Lovable's default deployment target unchanged.
 - Bulk admin submissions reuse the existing authorized server connection and insert a parsed batch in one statement, with browser-safe parsing shared by client validation and tests.
