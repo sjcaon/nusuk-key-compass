@@ -7,7 +7,9 @@ describe("Production board rules", () => {
     for (const active of [true, false]) {
       const cards = boardCards([old, fresh, { ...old, key_value: "NG-KASwudnf" }], [PINNED_KEY.id, "old"], true, [], active);
       expect(cards.map((key) => key.key_value)).toEqual(["NG-KASwudnf", "FRESH"]);
-      expect(nusukKeyUrl(cards[0].key_value)).toBe("https://services.nusuk.sa/app?p=27&id=NG-KASwudnf");
+      const first = cards[0];
+      if (!first) throw new Error("Pinned key is missing");
+      expect(nusukKeyUrl(first.key_value)).toBe("https://services.nusuk.sa/app?p=27&id=NG-KASwudnf");
     }
   });
   it("requests the next 50 rows with inclusive non-overlapping ranges", () => {
