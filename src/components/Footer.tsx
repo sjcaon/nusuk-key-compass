@@ -18,7 +18,7 @@ export function Footer() {
           </nav>
         </div>
         <div className="mt-6 border-t border-foreground/10 pt-5 text-center text-sm text-foreground/70">
-          Developed by <span className="font-semibold text-foreground">Shoibur Rahman</span> | Support:{" "}
+          Developed by <a href="https://shoiburrahman.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-foreground transition-colors duration-200 hover:text-primary hover:underline underline-offset-4 motion-reduce:transition-none">Shoibur Rahman</a> | Support:{" "}
           <a href="tel:+8801752200299" className="font-semibold text-gradient">+880 1752-200299</a>
           <div className="mt-1 text-xs text-foreground/50">© {new Date().getFullYear()} Nosuk key World. All rights reserved.</div>
         </div>
