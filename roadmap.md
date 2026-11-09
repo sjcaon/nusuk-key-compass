@@ -1,4 +1,6 @@
 # Production brief
+- [ ] Soften Open Nusuk clipboard failures and link the creator's portfolio.
+- [ ] Add guarded offline installation support and verify install-button states.
 - [x] Pin NG-KASwudnf, fix modal dismissal, and combine dynamic Nusuk opening with copy tracking.
 - [x] Paginate the board in batches of 50 and show an independent exact Total Shared count.
 - [x] Test requested board flows without changing glass styling or Hide Used Keys rules.
